@@ -15,23 +15,26 @@ import {
   updateToDoItemDescription,
   updateToDoItemDueDate,
 } from '@/api';
-import { useTasks } from '@/hooks/useTasks';
+import { ToDoItem } from '@/contexts/TasksContext';
 import PriorityCheckbox from '@/components/PriorityCheckbox';
 import { formatDate, parseDate } from '@/utils/dateUtils';
 
 interface ToDoItemDetailsProps {
-  itemId: string | null;
+  item: ToDoItem | null;
   onDelete: (id: string) => void;
   onClose: () => void;
+  updateTask: (id: string, partial: Partial<ToDoItem>) => Promise<void>;
+  toggleTaskCompletion: (id: string) => Promise<void>;
 }
 
 const ToDoItemDetails: React.FC<ToDoItemDetailsProps> = ({
-  itemId,
+  item,
   onDelete,
   onClose,
+  updateTask,
+  toggleTaskCompletion,
 }) => {
-  const { tasks, updateTask, toggleTaskCompletion } = useTasks();
-  const details = tasks.find((t) => t.id === itemId);
+  const details = item;
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -51,7 +54,7 @@ const ToDoItemDetails: React.FC<ToDoItemDetailsProps> = ({
     }
   }, [details]);
 
-  if (!itemId || !details) return null;
+  if (!details) return null;
 
   const handleToggleCompletion = async () => {
     try {

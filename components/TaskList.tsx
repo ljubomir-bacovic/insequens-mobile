@@ -4,6 +4,7 @@ import { Modal, Portal, Surface, Text } from 'react-native-paper';
 import TaskCard from '@/components/TaskCard';
 import ToDoItemDetails from '@/components/ToDoItemDetails';
 import { ToDoItem } from '@/contexts/TasksContext';
+import { useTasks } from '@/hooks/useTasks';
 
 interface TaskListProps {
   tasks: ToDoItem[];
@@ -17,6 +18,14 @@ const TaskList: React.FC<TaskListProps> = ({
   onDeleteTask,
 }) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { tasks: contextTasks, updateTask, toggleTaskCompletion } = useTasks();
+
+  // Look up the selected item from the full context task list rather than the
+  // filtered `tasks` prop so the modal stays populated even when the task is
+  // updated and filtered out of the current view (e.g. due date changed).
+  const selectedItem = selectedItemId
+    ? (contextTasks.find((t) => t.id === selectedItemId) ?? null)
+    : null;
 
   const handleItemClick = (id: string) => {
     setSelectedItemId(id);
@@ -49,14 +58,16 @@ const TaskList: React.FC<TaskListProps> = ({
             <Text variant="titleMedium" style={styles.modalTitle}>
               Task Details
             </Text>
-            {selectedItemId && (
+            {selectedItem && (
               <ToDoItemDetails
-                itemId={selectedItemId}
+                item={selectedItem}
                 onDelete={async (id) => {
                   await onDeleteTask(id);
                   setSelectedItemId(null);
                 }}
                 onClose={handleCloseDetails}
+                updateTask={updateTask}
+                toggleTaskCompletion={toggleTaskCompletion}
               />
             )}
           </Surface>
