@@ -59,9 +59,13 @@ export default function TodayScreen() {
               icon={showOverdue ? 'chevron-up' : 'chevron-down'}
               onPress={() => setShowOverdue((p) => !p)}
               compact
+              textColor="#111827"
             >
-              Overdue
+              {''}
             </Button>
+            <Text variant="titleSmall" style={styles.overdueTitle}>
+              Overdue
+            </Text>
           </View>
           {showOverdue && (
             <TaskList
@@ -90,9 +94,15 @@ export default function TodayScreen() {
           onDeleteTask={deleteTask}
         />
       ) : todayDoneTasks.length > 0 && overdueTasks.length === 0 ? (
-        <NoTasksState message="Looks like you're done with all your tasks for today!" />
+        <NoTasksState
+          message="Looks like you're done with all your tasks for today!"
+          image={require('@/assets/images/success.jpg')}
+        />
       ) : overdueTasks.length === 0 ? (
-        <NoTasksState message="No tasks for today. Add a new task to start planning your day!" />
+        <NoTasksState
+          message="No tasks for today. Add a new task to start planning your day!"
+          image={require('@/assets/images/plan.jpg')}
+        />
       ) : null}
 
       <AddTaskSection onAddTask={handleAddTask} defaultDueDate={today} />
@@ -116,6 +126,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  overdueTitle: {
+    fontWeight: '700',
+    color: '#111827',
   },
   dateHeader: {
     marginBottom: 12,

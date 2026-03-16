@@ -35,7 +35,10 @@ export default function UpcomingScreen() {
           onDeleteTask={deleteTask}
         />
       ) : (
-        <NoTasksState message="You have no upcoming tasks! Start making plans by creating some tasks!" />
+        <NoTasksState
+          message="You have no upcoming tasks! Start making plans by creating some tasks!"
+          image={require('@/assets/images/organize.jpg')}
+        />
       )}
       <AddTaskSection defaultDueDate={new Date()} onAddTask={handleAddTask} />
     </ScrollView>
