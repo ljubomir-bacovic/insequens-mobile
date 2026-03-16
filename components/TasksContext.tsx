@@ -13,7 +13,7 @@ export type { ToDoItem } from '@/contexts/TasksContext';
 export { TasksContext } from '@/contexts/TasksContext';
 
 const normalizeTask = (item: any): ToDoItem => ({
-  id: item.id ?? item.Id ?? '',
+  id: String(item.id ?? item.Id ?? ''),
   name: item.name ?? item.Name ?? '',
   description: item.description ?? item.Description,
   dueDate: item.dueDate ?? item.DueDate,
@@ -116,7 +116,10 @@ const findTaskArray = (data: any, currentDepth = 0): unknown[] => {
 
 const extractTasksArray = (data: unknown): ToDoItem[] => {
   const raw = deduplicateTasks(findTaskArray(data));
-  return raw.map(normalizeTask);
+  const tasks = raw.map(normalizeTask);
+  // Fallback: handle a direct single-task response (e.g. from addToDoItem)
+  if (tasks.length === 0 && isTaskLike(data)) return [normalizeTask(data)];
+  return tasks;
 };
 
 export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -201,7 +204,9 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
     async (data: TaskSubmitData): Promise<ToDoItem | null> => {
       try {
         const response = await addToDoItem(data);
-        const newItem = normalizeTask(response.data);
+        const extracted = extractTasksArray(response.data);
+        if (extracted.length === 0) return null;
+        const newItem = extracted[0];
         setAllTasks((prev) => [...prev, newItem]);
         return newItem;
       } catch (err) {
