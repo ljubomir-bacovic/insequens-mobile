@@ -145,12 +145,12 @@ const mergeUniqueTasks = (
     }
     if (typeof task.id === 'number') {
       if (!hasWarnedNumericId) {
-        console.warn(`${context}: Normalizing numeric task ID ${task.id}`);
+        console.warn(`${context}: Converting numeric task ID ${task.id}`);
         hasWarnedNumericId = true;
       }
     }
-    // API responses sometimes return numeric IDs; normalize to string to match
-    // ToDoItem.id (string) and deduplicate reliably across types.
+    // ToDoItem.id is typed as string, but API responses sometimes return numbers;
+    // convert to string to deduplicate reliably across types.
     merged.set(String(task.id), task);
   };
 
@@ -262,7 +262,9 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newItems.length < ITEMS_PER_PAGE) {
         setHasMoreCompleted(false);
       }
-      setAllTasks((prev) => mergeUniqueTasks(prev, newItems, true, 'pagination'));
+      setAllTasks((prev) =>
+        mergeUniqueTasks(prev, newItems, true, 'loadMoreCompleted')
+      );
       setCompletedPage(nextPage);
     } catch (err) {
       console.error('Failed to load more completed tasks', err);
