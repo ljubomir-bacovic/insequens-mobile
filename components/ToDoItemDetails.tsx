@@ -259,14 +259,12 @@ const ToDoItemDetails: React.FC<ToDoItemDetailsProps> = ({
       <Divider style={styles.divider} />
 
       {/* Delete */}
-      <Button
-        mode="contained"
-        buttonColor="#ef4444"
+      <TouchableOpacity
         onPress={() => onDelete(details.id)}
-        style={styles.deleteButton}
+        style={styles.deleteRow}
       >
-        Delete Task
-      </Button>
+        <Text style={styles.deleteText}>Delete Task</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -318,9 +316,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 4,
   },
-  deleteButton: {
+  deleteRow: {
     marginTop: 8,
     marginBottom: 8,
+    paddingVertical: 4,
+  },
+  deleteText: {
+    color: '#dc2626',
+    fontSize: 14,
   },
 });
 

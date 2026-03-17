@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Modal, Portal, Surface, Text } from 'react-native-paper';
+import { IconButton, Modal, Portal, Surface, Text } from 'react-native-paper';
 import TaskCard from '@/components/TaskCard';
 import ToDoItemDetails from '@/components/ToDoItemDetails';
 import { ToDoItem } from '@/contexts/TasksContext';
@@ -55,9 +55,17 @@ const TaskList: React.FC<TaskListProps> = ({
           contentContainerStyle={styles.modalContainer}
         >
           <Surface style={styles.modalContent} elevation={4}>
-            <Text variant="titleMedium" style={styles.modalTitle}>
-              Task Details
-            </Text>
+            <View style={styles.modalHeader}>
+              <Text variant="titleMedium" style={styles.modalTitle}>
+                Task Details
+              </Text>
+              <IconButton
+                icon="close"
+                size={20}
+                onPress={handleCloseDetails}
+                style={styles.closeButton}
+              />
+            </View>
             {selectedItem && (
               <ToDoItemDetails
                 item={selectedItem}
@@ -89,9 +97,17 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#fff',
   },
-  modalTitle: {
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
+  },
+  modalTitle: {
     fontWeight: '600',
+  },
+  closeButton: {
+    margin: 0,
   },
 });
 
