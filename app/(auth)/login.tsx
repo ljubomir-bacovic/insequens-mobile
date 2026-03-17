@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,10 +6,13 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Text, TextInput, Button } from 'react-native-paper';
+import { Text, TextInput, Button, Checkbox } from 'react-native-paper';
 import { useRouter, Link } from 'expo-router';
 import { loginUser } from '@/api';
 import * as SecureStore from 'expo-secure-store';
+
+const REMEMBER_ME_KEY = 'rememberMe';
+const SAVED_EMAIL_KEY = 'savedEmail';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -18,6 +21,21 @@ export default function LoginScreen() {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      const saved = await SecureStore.getItemAsync(REMEMBER_ME_KEY);
+      if (saved === 'true') {
+        setRememberMe(true);
+        const savedEmail = await SecureStore.getItemAsync(SAVED_EMAIL_KEY);
+        if (savedEmail) {
+          setForm((p) => ({ ...p, email: savedEmail }));
+        }
+      }
+    };
+    loadSavedCredentials();
+  }, []);
 
   const handleSubmit = async () => {
     setError('');
@@ -37,6 +55,14 @@ export default function LoginScreen() {
       }
       await SecureStore.setItemAsync('token', token);
       if (refreshToken) await SecureStore.setItemAsync('refreshToken', refreshToken);
+
+      if (rememberMe) {
+        await SecureStore.setItemAsync(REMEMBER_ME_KEY, 'true');
+        await SecureStore.setItemAsync(SAVED_EMAIL_KEY, form.email);
+      } else {
+        await SecureStore.deleteItemAsync(REMEMBER_ME_KEY);
+        await SecureStore.deleteItemAsync(SAVED_EMAIL_KEY);
+      }
 
       router.replace('/(app)/today');
     } catch (err: unknown) {
@@ -95,6 +121,19 @@ export default function LoginScreen() {
           style={styles.input}
         />
 
+        <View style={styles.rememberRow}>
+          <Checkbox
+            status={rememberMe ? 'checked' : 'unchecked'}
+            onPress={() => setRememberMe((p) => !p)}
+          />
+          <Text
+            style={styles.rememberText}
+            onPress={() => setRememberMe((p) => !p)}
+          >
+            Remember me
+          </Text>
+        </View>
+
         <Button
           mode="contained"
           onPress={handleSubmit}
@@ -141,6 +180,14 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 12,
+  },
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  rememberText: {
+    color: '#374151',
   },
   button: {
     marginTop: 8,
