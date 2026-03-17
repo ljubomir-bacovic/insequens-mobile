@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TextInput } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Appbar, IconButton, Portal, Modal, Surface, Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TasksProvider } from '@/components/TasksContext';
 import { useTasks } from '@/hooks/useTasks';
 import useLogout from '@/hooks/useLogout';
@@ -129,8 +130,8 @@ function AppContent() {
           name="today"
           options={{
             title: 'Today',
-            tabBarIcon: ({ color }) => (
-              <TabIcon name="today" color={color} />
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="calendar-today" color={color} size={size} />
             ),
           }}
         />
@@ -138,8 +139,8 @@ function AppContent() {
           name="todo"
           options={{
             title: 'All Tasks',
-            tabBarIcon: ({ color }) => (
-              <TabIcon name="list" color={color} />
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="format-list-bulleted" color={color} size={size} />
             ),
           }}
         />
@@ -147,8 +148,8 @@ function AppContent() {
           name="upcoming"
           options={{
             title: 'Upcoming',
-            tabBarIcon: ({ color }) => (
-              <TabIcon name="upcoming" color={color} />
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="calendar-clock" color={color} size={size} />
             ),
           }}
         />
@@ -156,8 +157,8 @@ function AppContent() {
           name="overdue"
           options={{
             title: 'Overdue',
-            tabBarIcon: ({ color }) => (
-              <TabIcon name="overdue" color={color} />
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons name="clock-alert" color={color} size={size} />
             ),
           }}
         />
@@ -168,18 +169,6 @@ function AppContent() {
         onDismiss={() => setAddTaskVisible(false)}
       />
     </>
-  );
-}
-
-function TabIcon({ name, color }: { name: string; color: string }) {
-  const icons: Record<string, string> = {
-    today: '📅',
-    list: '📋',
-    upcoming: '📆',
-    overdue: '⚠️',
-  };
-  return (
-    <Text style={{ fontSize: 18, color }}>{icons[name] ?? '•'}</Text>
   );
 }
 

@@ -30,7 +30,10 @@ export default function OverdueScreen() {
           onDeleteTask={deleteTask}
         />
       ) : (
-        <NoTasksState message="Congratulations! You have no overdue tasks. You are really achieving peace of mind!" />
+        <NoTasksState
+          message="Congratulations! You have no overdue tasks. You are really achieving peace of mind!"
+          image={require('@/assets/images/peace.jpg')}
+        />
       )}
     </ScrollView>
   );
