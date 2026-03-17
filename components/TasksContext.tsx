@@ -122,6 +122,18 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
   return tasks;
 };
 
+const mergeUniqueTasks = (
+  existing: ToDoItem[],
+  incoming: ToDoItem[]
+): ToDoItem[] => {
+  const merged = new Map<string, ToDoItem>();
+  [...existing, ...incoming].forEach((task) => {
+    if (!task?.id) return;
+    merged.set(String(task.id), task);
+  });
+  return Array.from(merged.values());
+};
+
 export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -186,7 +198,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
           complete.status === 'fulfilled'
             ? extractTasksArray(complete.value.data)
             : [];
-        setAllTasks([...incompleteTasks, ...completeTasks]);
+        setAllTasks(mergeUniqueTasks(incompleteTasks, completeTasks));
         setHasMoreCompleted(
           complete.status === 'fulfilled' &&
             completeTasks.length === ITEMS_PER_PAGE
@@ -207,7 +219,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         const extracted = extractTasksArray(response.data);
         if (extracted.length === 0) return null;
         const newItem = extracted[0];
-        setAllTasks((prev) => [...prev, newItem]);
+        setAllTasks((prev) => mergeUniqueTasks(prev, [newItem]));
         return newItem;
       } catch (err) {
         console.error('Failed to add task', err);
@@ -225,7 +237,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newItems.length < ITEMS_PER_PAGE) {
         setHasMoreCompleted(false);
       }
-      setAllTasks((prev) => [...prev, ...newItems]);
+      setAllTasks((prev) => mergeUniqueTasks(prev, newItems));
       setCompletedPage(nextPage);
     } catch (err) {
       console.error('Failed to load more completed tasks', err);
