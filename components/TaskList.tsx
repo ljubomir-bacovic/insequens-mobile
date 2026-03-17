@@ -18,6 +18,7 @@ const TaskList: React.FC<TaskListProps> = ({
   onDeleteTask,
 }) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [isDetailsVisible, setIsDetailsVisible] = useState(false);
   const { tasks: contextTasks, updateTask, toggleTaskCompletion } = useTasks();
 
   // Look up the selected item from the full context task list rather than the
@@ -29,9 +30,14 @@ const TaskList: React.FC<TaskListProps> = ({
 
   const handleItemClick = (id: string) => {
     setSelectedItemId(id);
+    setIsDetailsVisible(true);
   };
 
   const handleCloseDetails = () => {
+    setIsDetailsVisible(false);
+  };
+
+  const handleDetailsDismissed = () => {
     setSelectedItemId(null);
   };
 
@@ -50,8 +56,8 @@ const TaskList: React.FC<TaskListProps> = ({
 
       <Portal>
         <Modal
-          visible={Boolean(selectedItemId)}
-          onDismiss={handleCloseDetails}
+          visible={isDetailsVisible}
+          onDismiss={handleDetailsDismissed}
           contentContainerStyle={styles.modalContainer}
         >
           <Surface style={styles.modalContent} elevation={4}>
@@ -71,7 +77,7 @@ const TaskList: React.FC<TaskListProps> = ({
                 item={selectedItem}
                 onDelete={async (id) => {
                   await onDeleteTask(id);
-                  setSelectedItemId(null);
+                  setIsDetailsVisible(false);
                 }}
                 onClose={handleCloseDetails}
                 updateTask={updateTask}
