@@ -121,7 +121,13 @@ export default function LoginScreen() {
           style={styles.input}
         />
 
-        <View style={styles.rememberRow}>
+        <View
+          style={styles.rememberRow}
+          accessible
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: rememberMe }}
+          accessibilityLabel="Remember me"
+        >
           <Checkbox
             status={rememberMe ? 'checked' : 'unchecked'}
             onPress={() => setRememberMe((p) => !p)}
@@ -129,6 +135,7 @@ export default function LoginScreen() {
           <Text
             style={styles.rememberText}
             onPress={() => setRememberMe((p) => !p)}
+            accessible={false}
           >
             Remember me
           </Text>
