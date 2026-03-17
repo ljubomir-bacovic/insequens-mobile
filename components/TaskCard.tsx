@@ -20,47 +20,46 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onItemClick, onUpdateStatus }
   });
 
   return (
-    <TouchableOpacity
-      onPress={() => onItemClick(task.id)}
-      activeOpacity={0.7}
+    <Surface
+      style={[
+        styles.surface,
+        { backgroundColor: isCompleted ? '#f9fafb' : '#fff' },
+      ]}
+      elevation={1}
     >
-      <Surface
-        style={[
-          styles.surface,
-          { backgroundColor: isCompleted ? '#f9fafb' : '#fff' },
-        ]}
-        elevation={1}
-      >
-        <View style={styles.row}>
-          <PriorityCheckbox
-            checked={task.isCompleted}
-            onChange={() => onUpdateStatus(task.id)}
-            priority={task.priority}
-            isCompleted={task.isCompleted}
-          />
+      <View style={styles.row}>
+        <PriorityCheckbox
+          checked={task.isCompleted}
+          onChange={() => onUpdateStatus(task.id)}
+          priority={task.priority}
+          isCompleted={task.isCompleted}
+        />
 
-          <View style={styles.textContainer}>
-            <Text
-              variant="bodyMedium"
-              numberOfLines={1}
-              style={[
-                styles.taskName,
-                {
-                  textDecorationLine: isCompleted ? 'line-through' : 'none',
-                  color: isCompleted ? '#9CA3AF' : '#111827',
-                },
-              ]}
-            >
-              {task.name}
-            </Text>
+        <TouchableOpacity
+          onPress={() => onItemClick(task.id)}
+          activeOpacity={0.7}
+          style={styles.textContainer}
+        >
+          <Text
+            variant="bodyMedium"
+            numberOfLines={1}
+            style={[
+              styles.taskName,
+              {
+                textDecorationLine: isCompleted ? 'line-through' : 'none',
+                color: isCompleted ? '#9CA3AF' : '#111827',
+              },
+            ]}
+          >
+            {task.name}
+          </Text>
 
-            <Text variant="bodySmall" style={styles.dueDate}>
-              {task.dueDate ? formattedDueDate : 'No due date'}
-            </Text>
-          </View>
-        </View>
-      </Surface>
-    </TouchableOpacity>
+          <Text variant="bodySmall" style={styles.dueDate}>
+            {task.dueDate ? formattedDueDate : 'No due date'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </Surface>
   );
 };
 

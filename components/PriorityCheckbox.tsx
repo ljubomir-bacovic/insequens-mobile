@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Checkbox } from 'react-native-paper';
 
 interface PriorityCheckboxProps {
@@ -31,7 +31,7 @@ const PriorityCheckbox: React.FC<PriorityCheckboxProps> = ({
   const color = getPriorityColor(priority);
 
   return (
-    <TouchableOpacity onPress={onChange} style={styles.container}>
+    <View style={styles.container}>
       <View style={[styles.checkboxWrapper, { borderColor: color }]}>
         <Checkbox
           status={checked || isCompleted ? 'checked' : 'unchecked'}
@@ -40,7 +40,7 @@ const PriorityCheckbox: React.FC<PriorityCheckboxProps> = ({
           uncheckedColor={color}
         />
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
