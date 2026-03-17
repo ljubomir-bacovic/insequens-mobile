@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { IconButton, Modal, Portal, Surface, Text } from 'react-native-paper';
 import TaskCard from '@/components/TaskCard';
 import ToDoItemDetails from '@/components/ToDoItemDetails';
 import { ToDoItem } from '@/contexts/TasksContext';
 import { useTasks } from '@/hooks/useTasks';
+
+// Keep details mounted through the paper modal exit transition before cleanup.
+const MODAL_EXIT_CLEANUP_DELAY_MS = 250;
 
 interface TaskListProps {
   tasks: ToDoItem[];
@@ -18,6 +21,7 @@ const TaskList: React.FC<TaskListProps> = ({
   onDeleteTask,
 }) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [isDetailsVisible, setIsDetailsVisible] = useState(false);
   const { tasks: contextTasks, updateTask, toggleTaskCompletion } = useTasks();
 
   // Look up the selected item from the full context task list rather than the
@@ -29,11 +33,22 @@ const TaskList: React.FC<TaskListProps> = ({
 
   const handleItemClick = (id: string) => {
     setSelectedItemId(id);
+    setIsDetailsVisible(true);
   };
 
   const handleCloseDetails = () => {
-    setSelectedItemId(null);
+    setIsDetailsVisible(false);
   };
+
+  useEffect(() => {
+    if (isDetailsVisible) return;
+
+    const timeoutId = setTimeout(() => {
+      setSelectedItemId(null);
+    }, MODAL_EXIT_CLEANUP_DELAY_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [isDetailsVisible]);
 
   return (
     <>
@@ -50,7 +65,7 @@ const TaskList: React.FC<TaskListProps> = ({
 
       <Portal>
         <Modal
-          visible={Boolean(selectedItemId)}
+          visible={isDetailsVisible}
           onDismiss={handleCloseDetails}
           contentContainerStyle={styles.modalContainer}
         >
@@ -71,7 +86,7 @@ const TaskList: React.FC<TaskListProps> = ({
                 item={selectedItem}
                 onDelete={async (id) => {
                   await onDeleteTask(id);
-                  setSelectedItemId(null);
+                  setIsDetailsVisible(false);
                 }}
                 onClose={handleCloseDetails}
                 updateTask={updateTask}
