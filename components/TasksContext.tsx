@@ -132,17 +132,21 @@ const mergeUniqueTasks = (
   preferIncoming = true
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
-  const ordered = preferIncoming
-    ? [...existing, ...incoming]
-    : [...incoming, ...existing];
+  const append = (list: ToDoItem[]) => {
+    list.forEach((task) => {
+      if (!task?.id) {
+        console.warn('Skipping task without id', task);
+        return;
+      }
+      // Normalize to string so numeric/string IDs deduplicate correctly.
+      merged.set(String(task.id), task);
+    });
+  };
 
-  ordered.forEach((task) => {
-    if (!task?.id) {
-      console.warn('Skipping task without id', task);
-      return;
-    }
-    merged.set(String(task.id), task);
-  });
+  const base = preferIncoming ? existing : incoming;
+  const overrides = preferIncoming ? incoming : existing;
+  append(base);
+  append(overrides);
   return Array.from(merged.values());
 };
 
