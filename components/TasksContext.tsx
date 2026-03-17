@@ -133,7 +133,7 @@ const mergeUniqueTasks = (
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
 
-  const addTask = (task: ToDoItem) => {
+  const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
       console.error('Skipping task without id', task);
       return;
@@ -144,11 +144,11 @@ const mergeUniqueTasks = (
   };
 
   if (existingWins) {
-    incoming.forEach(addTask);
-    existing.forEach(addTask); // existing overrides incoming
+    incoming.forEach(addToMerged);
+    existing.forEach(addToMerged); // existing overrides incoming
   } else {
-    existing.forEach(addTask);
-    incoming.forEach(addTask); // incoming overrides existing
+    existing.forEach(addToMerged);
+    incoming.forEach(addToMerged); // incoming overrides existing
   }
   return Array.from(merged.values());
 };
