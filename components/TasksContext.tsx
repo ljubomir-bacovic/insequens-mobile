@@ -135,10 +135,11 @@ const mergeUniqueTasks = (
   const append = (list: ToDoItem[]) =>
     list.forEach((task) => {
       if (!task?.id) {
-        console.warn('Skipping task without id', task);
+        console.error('Skipping task without id', task);
         return;
       }
-      // Normalize to string so numeric/string IDs deduplicate correctly.
+      // API responses sometimes return numeric IDs; normalize to string to match
+      // ToDoItem.id and deduplicate reliably across types.
       merged.set(String(task.id), task);
     });
 
