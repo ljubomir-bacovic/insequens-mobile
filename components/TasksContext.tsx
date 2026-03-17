@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getToDoItems,
   addToDoItem,
@@ -122,19 +122,23 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
   return tasks;
 };
 
-let hasWarnedNumericId = false;
-
 // Merge task arrays by ID. By default, incoming items overwrite existing ones to
 // keep the most recent copy and avoid duplicate keys. When `existingWins` is
 // true, existing items win to prevent overwriting local updates with potentially
 // stale server data (useful for pagination).
+interface MergeOptions {
+  existingWins?: boolean;
+  context?: string;
+  warnedNumericIdRef?: React.MutableRefObject<boolean>;
+}
+
 const mergeUniqueTasks = (
   existing: ToDoItem[],
   incoming: ToDoItem[],
-  existingWins = false,
-  context = 'mergeUniqueTasks'
+  { existingWins = false, context = 'mergeUniqueTasks', warnedNumericIdRef }: MergeOptions = {}
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
+  let hasWarnedNumericIdLocal = false;
 
   const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
@@ -144,9 +148,14 @@ const mergeUniqueTasks = (
       return;
     }
     if (typeof task.id === 'number') {
-      if (!hasWarnedNumericId) {
-        console.warn(`${context}: Converting numeric task ID ${task.id}`);
-        hasWarnedNumericId = true;
+      const hasWarned =
+        warnedNumericIdRef?.current ?? hasWarnedNumericIdLocal;
+      if (!hasWarned) {
+        console.warn(
+          `${context}: Converting numeric task ID ${task.id} to string`
+        );
+        hasWarnedNumericIdLocal = true;
+        if (warnedNumericIdRef) warnedNumericIdRef.current = true;
       }
     }
     // ToDoItem.id is typed as string, but API responses sometimes return numbers;
@@ -167,6 +176,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasMoreCompleted, setHasMoreCompleted] = useState(true);
   const [search, setSearch] = useState('');
+  const hasWarnedNumericIdRef = useRef(false);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -223,7 +233,12 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
           complete.status === 'fulfilled'
             ? extractTasksArray(complete.value.data)
             : [];
-        setAllTasks(mergeUniqueTasks(incompleteTasks, completeTasks, false, 'initialLoad'));
+        setAllTasks(
+          mergeUniqueTasks(incompleteTasks, completeTasks, {
+            context: 'initialLoad',
+            warnedNumericIdRef: hasWarnedNumericIdRef,
+          })
+        );
         setHasMoreCompleted(
           complete.status === 'fulfilled' &&
             completeTasks.length === ITEMS_PER_PAGE
@@ -244,7 +259,12 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         const extracted = extractTasksArray(response.data);
         if (extracted.length === 0) return null;
         const newItem = extracted[0];
-        setAllTasks((prev) => mergeUniqueTasks(prev, [newItem], false, 'addTask'));
+        setAllTasks((prev) =>
+          mergeUniqueTasks(prev, [newItem], {
+            context: 'addTask',
+            warnedNumericIdRef: hasWarnedNumericIdRef,
+          })
+        );
         return newItem;
       } catch (err) {
         console.error('Failed to add task', err);
@@ -263,7 +283,11 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         setHasMoreCompleted(false);
       }
       setAllTasks((prev) =>
-        mergeUniqueTasks(prev, newItems, true, 'loadMoreCompleted')
+        mergeUniqueTasks(prev, newItems, {
+          existingWins: true,
+          context: 'loadMoreCompleted',
+          warnedNumericIdRef: hasWarnedNumericIdRef,
+        })
       );
       setCompletedPage(nextPage);
     } catch (err) {
