@@ -37,10 +37,6 @@ const TaskList: React.FC<TaskListProps> = ({
     setIsDetailsVisible(false);
   };
 
-  const handleDetailsDismissed = () => {
-    setSelectedItemId(null);
-  };
-
   return (
     <>
       <View style={styles.list}>
@@ -57,7 +53,7 @@ const TaskList: React.FC<TaskListProps> = ({
       <Portal>
         <Modal
           visible={isDetailsVisible}
-          onDismiss={handleDetailsDismissed}
+          onDismiss={handleCloseDetails}
           contentContainerStyle={styles.modalContainer}
         >
           <Surface style={styles.modalContent} elevation={4}>
