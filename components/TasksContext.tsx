@@ -139,13 +139,13 @@ const mergeUniqueTasks = (
   const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
       console.error(
-        `${context}: Task is missing required id field. Check API response format.`
+        `${context}: Task is missing required ID field. Check API response format.`
       );
       return;
     }
     if (typeof task.id === 'number') {
       if (!hasWarnedNumericId) {
-        console.warn(`${context}: Normalizing numeric task id ${task.id}`);
+        console.warn(`${context}: Normalizing numeric task ID ${task.id}`);
         hasWarnedNumericId = true;
       }
     }
