@@ -122,13 +122,19 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
   return tasks;
 };
 
+// Merge task arrays by ID, allowing later items (e.g., newly fetched pages)
+// to overwrite earlier ones. This ensures we never render duplicate keys while
+// keeping the most recent copy of each task.
 const mergeUniqueTasks = (
   existing: ToDoItem[],
   incoming: ToDoItem[]
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
   [...existing, ...incoming].forEach((task) => {
-    if (!task?.id) return;
+    if (!task?.id) {
+      console.warn('Skipping task without id', task);
+      return;
+    }
     merged.set(String(task.id), task);
   });
   return Array.from(merged.values());
