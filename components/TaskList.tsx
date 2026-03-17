@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { IconButton, Modal, Portal, Surface, Text } from 'react-native-paper';
 import TaskCard from '@/components/TaskCard';
 import ToDoItemDetails from '@/components/ToDoItemDetails';
 import { ToDoItem } from '@/contexts/TasksContext';
 import { useTasks } from '@/hooks/useTasks';
+
+// Keep details mounted through the paper modal exit transition before cleanup.
+const MODAL_EXIT_CLEANUP_DELAY_MS = 250;
 
 interface TaskListProps {
   tasks: ToDoItem[];
@@ -36,6 +39,16 @@ const TaskList: React.FC<TaskListProps> = ({
   const handleCloseDetails = () => {
     setIsDetailsVisible(false);
   };
+
+  useEffect(() => {
+    if (isDetailsVisible) return;
+
+    const timeoutId = setTimeout(() => {
+      setSelectedItemId(null);
+    }, MODAL_EXIT_CLEANUP_DELAY_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [isDetailsVisible]);
 
   return (
     <>
