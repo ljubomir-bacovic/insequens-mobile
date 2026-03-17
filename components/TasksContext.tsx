@@ -136,11 +136,11 @@ const mergeUniqueTasks = (
 
   const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
-      console.error(`${context}: Skipping task without id`, task);
+      console.error(`${context}: Skipping task without id`);
       return;
     }
     if (typeof task.id === 'number') {
-      console.warn(`${context}: Normalizing numeric task id`, task);
+      console.warn(`${context}: Normalizing numeric task id ${task.id}`);
     }
     // API responses sometimes return numeric IDs; normalize to string to match
     // ToDoItem.id (string) and deduplicate reliably across types.
