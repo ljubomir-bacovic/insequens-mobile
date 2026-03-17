@@ -122,15 +122,21 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
   return tasks;
 };
 
-// Merge task arrays by ID, allowing later items (e.g., newly fetched pages)
-// to overwrite earlier ones. This ensures we never render duplicate keys while
-// keeping the most recent copy of each task.
+// Merge task arrays by ID. By default, later items (e.g., newly fetched pages)
+// overwrite earlier ones to keep the most recent copy and avoid duplicate keys.
+// When `preferIncoming` is false, existing items win to prevent overwriting
+// local updates with potentially stale server data (useful for pagination).
 const mergeUniqueTasks = (
   existing: ToDoItem[],
-  incoming: ToDoItem[]
+  incoming: ToDoItem[],
+  preferIncoming = true
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
-  [...existing, ...incoming].forEach((task) => {
+  const ordered = preferIncoming
+    ? [...existing, ...incoming]
+    : [...incoming, ...existing];
+
+  ordered.forEach((task) => {
     if (!task?.id) {
       console.warn('Skipping task without id', task);
       return;
@@ -243,7 +249,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newItems.length < ITEMS_PER_PAGE) {
         setHasMoreCompleted(false);
       }
-      setAllTasks((prev) => mergeUniqueTasks(prev, newItems));
+      setAllTasks((prev) => mergeUniqueTasks(prev, newItems, false));
       setCompletedPage(nextPage);
     } catch (err) {
       console.error('Failed to load more completed tasks', err);
