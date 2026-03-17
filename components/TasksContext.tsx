@@ -147,13 +147,8 @@ const mergeUniqueTasks = (
     merged.set(String(task.id), task);
   };
 
-  if (existingWins) {
-    incoming.forEach(addToMerged);
-    existing.forEach(addToMerged); // existing overrides incoming
-  } else {
-    existing.forEach(addToMerged);
-    incoming.forEach(addToMerged); // incoming overrides existing
-  }
+  const orderedLists = existingWins ? [incoming, existing] : [existing, incoming];
+  orderedLists.forEach((list) => list.forEach(addToMerged));
   return Array.from(merged.values());
 };
 
@@ -221,7 +216,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
           complete.status === 'fulfilled'
             ? extractTasksArray(complete.value.data)
             : [];
-        setAllTasks(mergeUniqueTasks(incompleteTasks, completeTasks, false, 'initial load'));
+        setAllTasks(mergeUniqueTasks(incompleteTasks, completeTasks, false, 'initialLoad'));
         setHasMoreCompleted(
           complete.status === 'fulfilled' &&
             completeTasks.length === ITEMS_PER_PAGE
