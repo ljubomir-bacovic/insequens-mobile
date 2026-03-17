@@ -129,14 +129,18 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
 const mergeUniqueTasks = (
   existing: ToDoItem[],
   incoming: ToDoItem[],
-  existingWins = false
+  existingWins = false,
+  context = 'mergeUniqueTasks'
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
 
   const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
-      console.error('mergeUniqueTasks: Skipping task without id', task);
+      console.error(`${context}: Skipping task without id`, task);
       return;
+    }
+    if (typeof task.id === 'number') {
+      console.warn(`${context}: Normalizing numeric task id`, task);
     }
     // API responses sometimes return numeric IDs; normalize to string to match
     // ToDoItem.id (string) and deduplicate reliably across types.
@@ -217,7 +221,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
           complete.status === 'fulfilled'
             ? extractTasksArray(complete.value.data)
             : [];
-        setAllTasks(mergeUniqueTasks(incompleteTasks, completeTasks));
+        setAllTasks(mergeUniqueTasks(incompleteTasks, completeTasks, false, 'initial load'));
         setHasMoreCompleted(
           complete.status === 'fulfilled' &&
             completeTasks.length === ITEMS_PER_PAGE
@@ -238,7 +242,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         const extracted = extractTasksArray(response.data);
         if (extracted.length === 0) return null;
         const newItem = extracted[0];
-        setAllTasks((prev) => mergeUniqueTasks(prev, [newItem]));
+        setAllTasks((prev) => mergeUniqueTasks(prev, [newItem], false, 'addTask'));
         return newItem;
       } catch (err) {
         console.error('Failed to add task', err);
@@ -256,7 +260,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newItems.length < ITEMS_PER_PAGE) {
         setHasMoreCompleted(false);
       }
-      setAllTasks((prev) => mergeUniqueTasks(prev, newItems, true));
+      setAllTasks((prev) => mergeUniqueTasks(prev, newItems, true, 'pagination'));
       setCompletedPage(nextPage);
     } catch (err) {
       console.error('Failed to load more completed tasks', err);
