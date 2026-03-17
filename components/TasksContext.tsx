@@ -135,11 +135,11 @@ const mergeUniqueTasks = (
 
   const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
-      console.error('Skipping task without id', task);
+      console.error('mergeUniqueTasks: Skipping task without id', task);
       return;
     }
     // API responses sometimes return numeric IDs; normalize to string to match
-    // ToDoItem.id and deduplicate reliably across types.
+    // ToDoItem.id (string) and deduplicate reliably across types.
     merged.set(String(task.id), task);
   };
 
