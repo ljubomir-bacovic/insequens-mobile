@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getToDoItems,
   addToDoItem,
@@ -12,14 +12,26 @@ import { TasksContext, ToDoItem } from '@/contexts/TasksContext';
 export type { ToDoItem } from '@/contexts/TasksContext';
 export { TasksContext } from '@/contexts/TasksContext';
 
-const normalizeTask = (item: any): ToDoItem => ({
-  id: String(item.id ?? item.Id ?? ''),
-  name: item.name ?? item.Name ?? '',
-  description: item.description ?? item.Description,
-  dueDate: item.dueDate ?? item.DueDate,
-  isCompleted: item.isCompleted ?? item.IsCompleted ?? false,
-  priority: item.priority ?? item.Priority,
-});
+let hasWarnedNumericIdAtNormalize = false;
+
+const normalizeTask = (item: any): ToDoItem => {
+  const rawId = item.id ?? item.Id ?? '';
+  if (typeof rawId === 'number' && !hasWarnedNumericIdAtNormalize) {
+    console.warn(
+      'normalizeTask: API returned numeric task ID; IDs should be strings for consistency'
+    );
+    hasWarnedNumericIdAtNormalize = true;
+  }
+
+  return {
+    id: String(rawId),
+    name: item.name ?? item.Name ?? '',
+    description: item.description ?? item.Description,
+    dueDate: item.dueDate ?? item.DueDate,
+    isCompleted: item.isCompleted ?? item.IsCompleted ?? false,
+    priority: item.priority ?? item.Priority,
+  };
+};
 
 const TASK_ARRAY_KEYS = [
   'data',
@@ -129,34 +141,21 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
 interface MergeOptions {
   existingWins?: boolean;
   context?: string;
-  warnedNumericIdRef?: React.MutableRefObject<boolean>;
 }
 
 const mergeUniqueTasks = (
   existing: ToDoItem[],
   incoming: ToDoItem[],
-  { existingWins = false, context = 'mergeUniqueTasks', warnedNumericIdRef }: MergeOptions = {}
+  { existingWins = false, context = 'mergeUniqueTasks' }: MergeOptions = {}
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
-  let hasWarnedNumericIdLocal = false;
 
   const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
       console.error(
-        `${context}: Task is missing required ID field. Check API response format.`
+        `${context}: Task is missing required ID field. Check API response format. Keys: ${Object.keys(task ?? {}).join(', ')}`
       );
       return;
-    }
-    if (typeof task.id === 'number') {
-      const hasWarned =
-        warnedNumericIdRef?.current ?? hasWarnedNumericIdLocal;
-      if (!hasWarned) {
-        console.warn(
-          `${context}: Converting numeric task ID ${task.id} to string`
-        );
-        hasWarnedNumericIdLocal = true;
-        if (warnedNumericIdRef) warnedNumericIdRef.current = true;
-      }
     }
     // ToDoItem.id is typed as string, but API responses sometimes return numbers;
     // convert to string to deduplicate reliably across types.
@@ -176,7 +175,6 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasMoreCompleted, setHasMoreCompleted] = useState(true);
   const [search, setSearch] = useState('');
-  const hasWarnedNumericIdRef = useRef(false);
 
   const ITEMS_PER_PAGE = 20;
 
@@ -236,7 +234,6 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         setAllTasks(
           mergeUniqueTasks(incompleteTasks, completeTasks, {
             context: 'initialLoad',
-            warnedNumericIdRef: hasWarnedNumericIdRef,
           })
         );
         setHasMoreCompleted(
@@ -262,7 +259,6 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         setAllTasks((prev) =>
           mergeUniqueTasks(prev, [newItem], {
             context: 'addTask',
-            warnedNumericIdRef: hasWarnedNumericIdRef,
           })
         );
         return newItem;
@@ -286,7 +282,6 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         mergeUniqueTasks(prev, newItems, {
           existingWins: true,
           context: 'loadMoreCompleted',
-          warnedNumericIdRef: hasWarnedNumericIdRef,
         })
       );
       setCompletedPage(nextPage);
