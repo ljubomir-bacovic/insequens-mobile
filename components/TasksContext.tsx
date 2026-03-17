@@ -122,33 +122,33 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
   return tasks;
 };
 
-// Merge task arrays by ID. By default, later items (e.g., newly fetched pages)
-// overwrite earlier ones to keep the most recent copy and avoid duplicate keys.
-// When `preferIncoming` is false, existing items win to prevent overwriting
-// local updates with potentially stale server data (useful for pagination).
+// Merge task arrays by ID. By default, incoming items overwrite existing ones to
+// keep the most recent copy and avoid duplicate keys. When `existingWins` is
+// true, existing items win to prevent overwriting local updates with potentially
+// stale server data (useful for pagination).
 const mergeUniqueTasks = (
   existing: ToDoItem[],
   incoming: ToDoItem[],
-  preferIncoming = true
+  existingWins = false
 ): ToDoItem[] => {
   const merged = new Map<string, ToDoItem>();
-  const append = (list: ToDoItem[]) =>
-    list.forEach((task) => {
-      if (!task?.id) {
-        console.error('Skipping task without id', task);
-        return;
-      }
-      // API responses sometimes return numeric IDs; normalize to string to match
-      // ToDoItem.id and deduplicate reliably across types.
-      merged.set(String(task.id), task);
-    });
 
-  if (preferIncoming) {
-    append(existing);
-    append(incoming); // incoming overrides existing
+  const addTask = (task: ToDoItem) => {
+    if (!task?.id) {
+      console.error('Skipping task without id', task);
+      return;
+    }
+    // API responses sometimes return numeric IDs; normalize to string to match
+    // ToDoItem.id and deduplicate reliably across types.
+    merged.set(String(task.id), task);
+  };
+
+  if (existingWins) {
+    incoming.forEach(addTask);
+    existing.forEach(addTask); // existing overrides incoming
   } else {
-    append(incoming);
-    append(existing); // existing overrides incoming
+    existing.forEach(addTask);
+    incoming.forEach(addTask); // incoming overrides existing
   }
   return Array.from(merged.values());
 };
@@ -256,7 +256,7 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newItems.length < ITEMS_PER_PAGE) {
         setHasMoreCompleted(false);
       }
-      setAllTasks((prev) => mergeUniqueTasks(prev, newItems, false));
+      setAllTasks((prev) => mergeUniqueTasks(prev, newItems, true));
       setCompletedPage(nextPage);
     } catch (err) {
       console.error('Failed to load more completed tasks', err);
