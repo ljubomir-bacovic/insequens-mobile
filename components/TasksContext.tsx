@@ -122,6 +122,8 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
   return tasks;
 };
 
+let hasWarnedNumericId = false;
+
 // Merge task arrays by ID. By default, incoming items overwrite existing ones to
 // keep the most recent copy and avoid duplicate keys. When `existingWins` is
 // true, existing items win to prevent overwriting local updates with potentially
@@ -136,11 +138,16 @@ const mergeUniqueTasks = (
 
   const addToMerged = (task: ToDoItem) => {
     if (!task?.id) {
-      console.error(`${context}: Skipping task without id`);
+      console.error(
+        `${context}: Task is missing required id field. Check API response format.`
+      );
       return;
     }
     if (typeof task.id === 'number') {
-      console.warn(`${context}: Normalizing numeric task id ${task.id}`);
+      if (!hasWarnedNumericId) {
+        console.warn(`${context}: Normalizing numeric task id ${task.id}`);
+        hasWarnedNumericId = true;
+      }
     }
     // API responses sometimes return numeric IDs; normalize to string to match
     // ToDoItem.id (string) and deduplicate reliably across types.
