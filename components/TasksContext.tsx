@@ -12,14 +12,26 @@ import { TasksContext, ToDoItem } from '@/contexts/TasksContext';
 export type { ToDoItem } from '@/contexts/TasksContext';
 export { TasksContext } from '@/contexts/TasksContext';
 
-const normalizeTask = (item: any): ToDoItem => ({
-  id: String(item.id ?? item.Id ?? ''),
-  name: item.name ?? item.Name ?? '',
-  description: item.description ?? item.Description,
-  dueDate: item.dueDate ?? item.DueDate,
-  isCompleted: item.isCompleted ?? item.IsCompleted ?? false,
-  priority: item.priority ?? item.Priority,
-});
+let hasWarnedNumericIdAtNormalize = false;
+
+const normalizeTask = (item: any): ToDoItem => {
+  const rawId = item.id ?? item.Id ?? '';
+  if (typeof rawId === 'number' && !hasWarnedNumericIdAtNormalize) {
+    console.warn(
+      'normalizeTask: API returned numeric task ID; IDs should be strings for consistency'
+    );
+    hasWarnedNumericIdAtNormalize = true;
+  }
+
+  return {
+    id: String(rawId),
+    name: item.name ?? item.Name ?? '',
+    description: item.description ?? item.Description,
+    dueDate: item.dueDate ?? item.DueDate,
+    isCompleted: item.isCompleted ?? item.IsCompleted ?? false,
+    priority: item.priority ?? item.Priority,
+  };
+};
 
 const TASK_ARRAY_KEYS = [
   'data',
@@ -122,6 +134,39 @@ const extractTasksArray = (data: unknown): ToDoItem[] => {
   return tasks;
 };
 
+// Merge task arrays by ID. By default, incoming items overwrite existing ones to
+// keep the most recent copy and avoid duplicate keys. When `existingWins` is
+// true, existing items win to prevent overwriting local updates with potentially
+// stale server data (useful for pagination).
+interface MergeOptions {
+  existingWins?: boolean;
+  context?: string;
+}
+
+const mergeUniqueTasks = (
+  existing: ToDoItem[],
+  incoming: ToDoItem[],
+  { existingWins = false, context = 'mergeUniqueTasks' }: MergeOptions = {}
+): ToDoItem[] => {
+  const merged = new Map<string, ToDoItem>();
+
+  const addToMerged = (task: ToDoItem) => {
+    if (!task?.id) {
+      console.error(
+        `${context}: Task is missing required ID field. Check API response format. Keys: ${Object.keys(task ?? {}).join(', ')}`
+      );
+      return;
+    }
+    // ToDoItem.id is typed as string, but API responses sometimes return numbers;
+    // convert to string to deduplicate reliably across types.
+    merged.set(String(task.id), task);
+  };
+
+  const orderedLists = existingWins ? [incoming, existing] : [existing, incoming];
+  orderedLists.forEach((list) => list.forEach(addToMerged));
+  return Array.from(merged.values());
+};
+
 export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -186,7 +231,11 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
           complete.status === 'fulfilled'
             ? extractTasksArray(complete.value.data)
             : [];
-        setAllTasks([...incompleteTasks, ...completeTasks]);
+        setAllTasks(
+          mergeUniqueTasks(incompleteTasks, completeTasks, {
+            context: 'initialLoad',
+          })
+        );
         setHasMoreCompleted(
           complete.status === 'fulfilled' &&
             completeTasks.length === ITEMS_PER_PAGE
@@ -207,7 +256,11 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
         const extracted = extractTasksArray(response.data);
         if (extracted.length === 0) return null;
         const newItem = extracted[0];
-        setAllTasks((prev) => [...prev, newItem]);
+        setAllTasks((prev) =>
+          mergeUniqueTasks(prev, [newItem], {
+            context: 'addTask',
+          })
+        );
         return newItem;
       } catch (err) {
         console.error('Failed to add task', err);
@@ -225,7 +278,12 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newItems.length < ITEMS_PER_PAGE) {
         setHasMoreCompleted(false);
       }
-      setAllTasks((prev) => [...prev, ...newItems]);
+      setAllTasks((prev) =>
+        mergeUniqueTasks(prev, newItems, {
+          existingWins: true,
+          context: 'loadMoreCompleted',
+        })
+      );
       setCompletedPage(nextPage);
     } catch (err) {
       console.error('Failed to load more completed tasks', err);
